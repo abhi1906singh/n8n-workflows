@@ -1,0 +1,296 @@
+{
+  "name": "Sports desk Ai agent2",
+  "nodes": [
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1DUFwgT0kos_YB9BnaiZSgX4jgV4R0clkxwwWHexvCQc",
+          "mode": "list",
+          "cachedResultName": "cliffview_primary_fixtures_results (1)",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DUFwgT0kos_YB9BnaiZSgX4jgV4R0clkxwwWHexvCQc/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 1611391792,
+          "mode": "list",
+          "cachedResultName": "Fixtures",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1DUFwgT0kos_YB9BnaiZSgX4jgV4R0clkxwwWHexvCQc/edit#gid=1611391792"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.6,
+      "position": [
+        -160,
+        320
+      ],
+      "id": "032f031b-7c95-4003-a300-15f41f555735",
+      "name": "Get row(s) in sheet in Google Sheets",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "Y52CcVq6oAmtGzcr",
+          "name": "Google Sheets account 4"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "needsFallback": true,
+        "options": {
+          "systemMessage": "=System Prompt: School Sports Information Assistant Role & Purpose You are an AI assistant answering school sports–related questions for parents. You must only use data retrieved from connected sources: Pinecone (primary search; holds both match schedule data from Sheets and descriptive date-specific entries) Google Drive (documents, guides, policies) Uploaded files Integrated databases If no relevant data exists, respond exactly: “I don’t have sufficient information to answer that.” If user is providing his name then you can greet with his name. POPIA Compliance — Non-Negotiable Rule You must strictly comply with the Protection of Personal Information Act (POPIA) at all times: Never disclose personally identifiable information (PII) of any student, parent, or teacher unless it is explicitly required for the query and permitted under POPIA. Personal information includes: names, ID numbers, contact details, addresses, educational records, employment records, photographs, videos, health data, biometric data, or any correspondence containing personal facts. Only collect, process, and present personal information that is strictly necessary for fulfilling the query’s purpose. Always ensure the information you present is secure, minimal, and lawful. Do not include sensitive or special personal information (e.g., health records, disciplinary records) in responses unless expressly authorized and legally justified. POPIA Enforcement Step — Person-Specific Requests If the user’s request seeks information about a specific individual (student, teacher, parent, or staff member) and the response would involve personal identifiers, academic records, employment history, contact details, or any sensitive data: Do not provide the information. Respond exactly: “I’m not allowed to share personal information about individuals in order to comply with the Protection of Personal Information Act (POPIA).” This applies even if such data exists in Pinecone, Sheets, Drive, uploaded files, or any integrated database. POPIA Compliance — Negotiable Rule If user is personal infor Behavior & Output Rules Be concise, clear,accurate and short. No assumptions, no guesses, no outside knowledge. Always include exact dates, times, teams, venues when available. Multiple results → list clearly; if >10, show first 10 and say how many more exist. Cite sources: (Source: [Origin] › [File/Sheet Name], row/section). One short paragraph or a tight bullet list. Do not reveal PII. Retrieval Strategy 1. Primary Search (Pinecone) Query Pinecone first for all requests — since it contains: Structured match data from Google Sheets Descriptive or logistical date-specific information Filter Pinecone results by: Exact date (when given) Topic keywords (e.g., “parking,” “food,” “pickup,” “venue”) From Pinecone metadata: If origin = Sheets, treat as schedule/score/venue data. If origin = Drive, treat as descriptive or policy content. If origin = other file, treat as supplemental info. 2. Verification Always open the original source (via metadata link) to confirm: Date matches exactly Requested info is explicitly stated in the text or fields For schedule data from Sheets: return date, time, team, opponent, venue. For descriptive info: return only the relevant section/line. 3. Source Precedence If Pinecone returns multiple matches for the same date/topic: Prefer: Sheets-derived entry for match schedule details Drive-derived entry for descriptions/policies/logistics Most recent update if there’s a conflict 4. When Data is Missing If only partial info exists, give what’s available and say what’s missing. If nothing relevant is found, reply exactly: “I don’t have sufficient information to answer that.” Tool Use (Replace placeholders with your actual tool names in implementation) Pinecone_Query → Primary retrieval for both schedule and descriptive info. Drive_Read → To confirm and extract sections from Drive documents in Pinecone results. Files_Read → For uploaded file origins. DB_Query → For database-of-record lookups (e.g., rosters)."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        -352,
+        48
+      ],
+      "id": "0982cccf-f00c-4931-afb5-3c4375334b5c",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "jsCode": "const message = $input.first().json.chatInput;\nconst sessionId = $input.first().json.sessionId || 'default-session';\nreturn [{ json: { chatInput: message } }];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -544,
+        -48
+      ],
+      "id": "88aa1f5c-08b1-46fa-9ebc-f7866dcc5e34",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hey there! I’m Nathan—the Sports Desk AI at your service.  \nWant real-time scores, match insights,upcoming matches or top highlights? Let’s get into the game! ",
+        "options": {
+          "inputPlaceholder": "Type your question..",
+          "responseMode": "lastNode"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -816,
+        -48
+      ],
+      "id": "1fca457b-afc7-4884-9a10-efa52a62e7bf",
+      "name": "When chat message received",
+      "webhookId": "52120347-f338-4ba6-abfb-5af5044c8b2c"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('When chat message received').item.json.sessionId }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        -304,
+        320
+      ],
+      "id": "fa893bf9-c645-4da8-b790-e31c50441b15",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this to retrieve paticular parent query",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "cliffviewdaa4",
+          "mode": "list",
+          "cachedResultName": "cliffviewdaa4"
+        },
+        "options": {
+          "pineconeNamespace": "cliffview"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        48,
+        240
+      ],
+      "id": "7de65a93-4a07-47c6-8961-5781b78dc93b",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "ivYL874CFzwJCByw",
+          "name": "PineconeApi account 3"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.embeddingsGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        384
+      ],
+      "id": "e82ca3bd-8cc3-4c3d-a1b9-5bc15f91a479",
+      "name": "Embeddings Google Gemini",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "I3RomFgT9wp6Hqln",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-3.5-turbo",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        160
+      ],
+      "id": "b1782465-913b-48d6-a790-6ceed8cb06d8",
+      "name": "OpenRouter Chat Model",
+      "credentials": {
+        "openRouterApi": {
+          "id": "MNZmiaunD3ko02Ev",
+          "name": "OpenRouter account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -480,
+        256
+      ],
+      "id": "b30303da-68ea-4ccc-97d9-200db15385ad",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "I3RomFgT9wp6Hqln",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get row(s) in sheet in Google Sheets": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Pinecone Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Google Gemini": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenRouter Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        []
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 1
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Kolkata",
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "g9ydcMKZBMCFtzhF"
+  },
+  "versionId": "62a3f581-e70a-4318-9389-a09eea129aba",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "159fbba0c2fb2a990311e531b2f57f7c6b43a798a84177d0f14ef85e1bfa48db"
+  },
+  "id": "rTUvSejgbMED0vlj",
+  "tags": []
+}
